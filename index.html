@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Simulator 1.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+    overflow: hidden;
+  }
+  #game-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+  }
+  #canvas {
+    display: block;
+    border: 3px solid #4a9eff;
+    box-shadow: 0 0 30px #4a9eff55;
+    background: #2d5016;
+    cursor: none;
+  }
+  #footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: #aaa;
+    background: #0d0d1a;
+    padding: 5px;
+    letter-spacing: 1px;
+    border-top: 1px solid #333;
+    z-index: 100;
+  }
+  #hud {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0d0d1aee;
+    padding: 6px 18px;
+    border-bottom: 2px solid #4a9eff44;
+    z-index: 100;
+    font-size: 15px;
+  }
+  #hud .hud-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+  #hud .hud-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+  #hud .hud-value { font-size: 18px; font-weight: bold; color: #4a9eff; }
+  #hud .snake-name { font-size: 16px; font-weight: bold; color: #f0c040; }
+  /* Overlay screens */
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000000cc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .overlay h1 {
+    font-size: 48px;
+    color: #f0c040;
+    text-shadow: 0 0 20px #f0c04088;
+    margin-bottom: 10px;
+  }
+  .overlay h2 {
+    font-size: 28px;
+    color: #4a9eff;
+    margin-bottom: 24px;
+  }
+  .overlay p { color: #ccc; margin: 6px 0; font-size: 15px; }
+  .overlay input[type="text"] {
+    padding: 12px 20px;
+    font-size: 22px;
+    border-radius: 10px;
+    border: 2px solid #4a9eff;
+    background: #1a1a3a;
+    color: #fff;
+    text-align: center;
+    margin: 14px 0;
+    width: 280px;
+    outline: none;
+  }
+  .btn {
+    margin: 10px;
+    padding: 14px 36px;
+    font-size: 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-primary { background: #f0c040; color: #1a1a2e; box-shadow: 0 4px 18px #f0c04066; }
+  .btn-primary:hover { box-shadow: 0 6px 28px #f0c04099; }
+  .btn-danger { background: #e05050; color: #fff; box-shadow: 0 4px 18px #e0505066; }
+  .btn-upgrade { background: #22c55e; color: #fff; font-size: 15px; padding: 10px 18px; margin: 6px; border-radius: 10px; }
+  .btn-upgrade:hover { box-shadow: 0 4px 16px #22c55e88; }
+  #upgrade-screen { display: none; }
+  #upgrade-screen .upgrade-grid { display: flex; flex-wrap: wrap; justify-content: center; max-width: 640px; }
+  #upgrade-screen .upgrade-card {
+    background: #1a2a3a;
+    border: 2px solid #4a9eff44;
+    border-radius: 14px;
+    padding: 16px;
+    margin: 8px;
+    width: 170px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  #upgrade-screen .upgrade-card:hover { border-color: #22c55e; transform: scale(1.04); }
+  #upgrade-screen .upgrade-card .up-icon { font-size: 36px; margin-bottom: 8px; }
+  #upgrade-screen .upgrade-card h3 { font-size: 15px; color: #f0c040; margin-bottom: 6px; }
+  #upgrade-screen .upgrade-card p { font-size: 12px; color: #aaa; }
+  /* Joystick */
+  #joystick-zone {
+    position: fixed;
+    bottom: 42px;
+    left: 20px;
+    width: 140px;
+    height: 140px;
+    z-index: 150;
+  }
+  #joystick-base {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: #ffffff18;
+    border: 3px solid #ffffff33;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #joystick-knob {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #6af, #24a);
+    box-shadow: 0 4px 14px #0008;
+    position: absolute;
+    pointer-events: none;
+    transition: transform 0.05s;
+  }
+  /* D-pad arrows inside joystick */
+  .dpad-arrow {
+    position: absolute;
+    font-size: 22px;
+    color: #ffffff55;
+    user-select: none;
+  }
+  .dpad-arrow.up    { top: 6px;    left: 50%; transform: translateX(-50%); }
+  .dpad-arrow.down  { bottom: 6px; left: 50%; transform: translateX(-50%); }
+  .dpad-arrow.left  { left: 6px;   top: 50%;  transform: translateY(-50%); }
+  .dpad-arrow.right { right: 6px;  top: 50%;  transform: translateY(-50%); }
+
+  /* Active upgrade badges */
+  #active-upgrades {
+    position: fixed;
+    top: 50px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 100;
+  }
+  .upgrade-badge {
+    background: #22c55ecc;
+    border-radius: 8px;
+    padding: 4px 10px;
+    margin: 2px 0;
+    font-size: 13px;
+    animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  #menu-screen .logo-snake { font-size: 80px; margin-bottom: 0; }
+  #menu-screen .tagline { color: #7cf; font-size: 14px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <div id="hud">
+    <div class="hud-item"><span class="hud-label">Score</span><span class="hud-value" id="score-display">0</span></div>
+    <div class="hud-item"><span class="snake-name" id="name-display">---</span><span style="font-size:11px;color:#aaa;">Your Python</span></div>
+    <div class="hud-item"><span class="hud-label">Rats</span><span class="hud-value" id="rats-display">0</span></div>
+    <div class="hud-item"><span class="hud-label">Length</span><span class="hud-value" id="length-display">1</span></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div id="active-upgrades"></div>
+
+  <!-- Joystick -->
+  <div id="joystick-zone">
+    <div id="joystick-base">
+      <span class="dpad-arrow up">▲</span>
+      <span class="dpad-arrow down">▼</span>
+      <span class="dpad-arrow left">◀</span>
+      <span class="dpad-arrow right">▶</span>
+      <div id="joystick-knob"></div>
+    </div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div class="overlay" id="menu-screen">
+    <div class="logo-snake">🐍</div>
+    <h1>Snake Simulator</h1>
+    <p class="tagline">Pied Ball Python Edition</p>
+    <h2>Name your python!</h2>
+    <input type="text" id="snake-name-input" placeholder="e.g. Noodles" maxlength="20" />
+    <button class="btn btn-primary" id="start-btn">LET'S GOOO! 🐍</button>
+    <p style="margin-top:16px;font-size:13px;color:#888;">Use arrow keys or the joystick to move</p>
+    <p style="font-size:13px;color:#888;">Eat frozen rats 🐀 to grow &amp; unlock upgrades!</p>
+  </div>
+
+  <!-- Upgrade Screen -->
+  <div class="overlay" id="upgrade-screen">
+    <h1>⬆️ UPGRADE TIME!</h1>
+    <h2 id="upgrade-prompt">Pick your power-up!</h2>
+    <div class="upgrade-grid" id="upgrade-grid"></div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="overlay" id="gameover-screen" style="display:none">
+    <h1>😵 OUCH!</h1>
+    <h2 id="gameover-name"></h2>
+    <p id="gameover-score"></p>
+    <p id="gameover-rats"></p>
+    <p id="gameover-length"></p>
+    <button class="btn btn-primary" style="margin-top:20px" id="restart-btn">Play Again! 🐍</button>
+  </div>
+
+  <div id="footer">Snake Simulator 1.0, built by Rylan Brill</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  GAME CONFIGURATION
+// ─────────────────────────────────────────────
+const TILE = 24;          // grid tile size in px
+const BASE_SPEED = 140;   // ms per move tick
+
+const UPGRADES = [
+  { id:'speed',   icon:'⚡', name:'Turbo Slither',  desc:'Move faster for a while!',         duration: 8000 },
+  { id:'magnet',  icon:'🧲', name:'Rat Magnet',     desc:'Rats slide toward you!',            duration: 9000 },
+  { id:'ghost',   icon:'👻', name:'Ghost Mode',     desc:'Phase through furniture!',          duration: 6000 },
+  { id:'double',  icon:'💰', name:'Double Points',  desc:'2x score for every rat!',           duration: 10000},
+  { id:'shield',  icon:'🛡️', name:'Wall Shield',   desc:'Survive one wall hit!',             duration: 0    },
+  { id:'freeze',  icon:'❄️', name:'Freeze Rats',   desc:'Extra frozen rats appear!',         duration: 5000 },
+  { id:'big',     icon:'💪', name:'Big Eater',      desc:'Grow SUPER fast!',                  duration: 0    },
+  { id:'shrink',  icon:'✂️', name:'Quick Shrink',  desc:'Shrink 3 segments — easier to steer!', duration: 0 },
+];
+
+// ─────────────────────────────────────────────
+//  CANVAS SETUP
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let COLS, ROWS;
+
+function resizeCanvas() {
+  const hud    = 44;
+  const footer = 28;
+  const joyH   = 160;
+  const w = Math.floor(window.innerWidth  / TILE) * TILE;
+  const availH = window.innerHeight - hud - footer;
+  const h = Math.floor(availH / TILE) * TILE;
+  canvas.width  = w;
+  canvas.height = h;
+  canvas.style.marginTop = hud + 'px';
+  COLS = canvas.width  / TILE;
+  ROWS = canvas.height / TILE;
+}
+
+// ─────────────────────────────────────────────
+//  HOUSE MAP
+// ─────────────────────────────────────────────
+// Walls and furniture are stored as a Set of "x,y" strings
+let walls      = new Set();
+let furniture  = new Set();  // passable only with ghost
+
+function buildHouse() {
+  walls.clear();
+  furniture.clear();
+
+  const W = COLS, H = ROWS;
+
+  // Outer border walls
+  for (let x = 0; x < W; x++) {
+    walls.add(`${x},0`);
+    walls.add(`${x},${H-1}`);
+  }
+  for (let y = 0; y < H; y++) {
+    walls.add(`0,${y}`);
+    walls.add(`${W-1},${y}`);
+  }
+
+  // Internal room dividers
+  const midX = Math.floor(W / 2);
+  const midY = Math.floor(H / 2);
+
+  // Horizontal wall with a door gap
+  for (let x = 1; x < W-1; x++) {
+    if (x !== midX-1 && x !== midX && x !== midX+1) {
+      walls.add(`${x},${midY}`);
+    }
+  }
+  // Vertical wall with a door gap
+  for (let y = 1; y < H-1; y++) {
+    if (y !== midY-1 && y !== midY && y !== midY+1) {
+      walls.add(`${midX},${y}`);
+    }
+  }
+
+  // Furniture: couch (top-left room)
+  const fx = 3, fy = 3;
+  for (let dx = 0; dx < 4; dx++) for (let dy = 0; dy < 2; dy++) furniture.add(`${fx+dx},${fy+dy}`);
+
+  // Furniture: table (top-right room)
+  const tx = midX+3, ty = 3;
+  for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 2; dy++) furniture.add(`${tx+dx},${ty+dy}`);
+
+  // Furniture: bed (bottom-left room)
+  const bx = 3, by = midY+3;
+  for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) furniture.add(`${bx+dx},${by+dy}`);
+
+  // Furniture: TV stand (bottom-right room)
+  const vx = midX+2, vy = midY+2;
+  for (let dx = 0; dx < 5; dx++) furniture.add(`${vx+dx},${vy}`);
+}
+
+// ─────────────────────────────────────────────
+//  GAME STATE
+// ─────────────────────────────────────────────
+let snakeName    = 'Noodles';
+let snake        = [];
+let dir          = { x: 1, y: 0 };
+let nextDir      = { x: 1, y: 0 };
+let rats         = [];
+let score        = 0;
+let ratsEaten    = 0;
+let gameRunning  = false;
+let lastTime     = 0;
+let moveTimer    = 0;
+let speed        = BASE_SPEED;
+let particles    = [];
+let floatTexts   = [];
+let shieldActive = false;
+let activeEffects= {};   // { effectId: expiresAt }
+let upgradeReady = false;
+let upgradesEarned = 0;
+let tongueOut    = false;
+let tongueTimer  = 0;
+let eyeBlinkTimer= 0;
+let eyeOpen      = true;
+
+// ─────────────────────────────────────────────
+//  PIED BALL PYTHON COLORS
+// ─────────────────────────────────────────────
+// Pied = irregular white patches on normally-patterned BCI
+const PIED_COLORS = [
+  ['#f5e6c8','#e8d5a0'],  // white/cream patch
+  ['#3d2200','#5a3400'],  // dark brown
+  ['#8b5e00','#c08200'],  // golden brown
+  ['#f5e6c8','#f0d888'],  // cream again
+  ['#2a1800','#3d2200'],  // very dark
+];
+
+// assign a color index to each segment based on position in snake
+function segColor(i) {
+  const pattern = [0,1,1,2,0,0,2,1,3,3,1,4];
+  return PIED_COLORS[pattern[i % pattern.length]];
+}
+
+// ─────────────────────────────────────────────
+//  SNAKE DRAW
+// ─────────────────────────────────────────────
+function drawSnake() {
+  const len = snake.length;
+  for (let i = len - 1; i >= 0; i--) {
+    const seg = snake[i];
+    const [c1, c2] = segColor(i);
+    const x = seg.x * TILE + TILE/2;
+    const y = seg.y * TILE + TILE/2;
+
+    // ghost mode transparency
+    const ghostMode = isActive('ghost');
+    ctx.globalAlpha = ghostMode ? 0.55 : 1;
+
+    if (i === 0) {
+      // HEAD
+      ctx.save();
+      // rotate head based on direction
+      const angle = dir.x === 1 ? 0 : dir.x === -1 ? Math.PI : dir.y === 1 ? Math.PI/2 : -Math.PI/2;
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Head shape (elongated ellipse)
+      const grad = ctx.createRadialGradient(-2, -3, 2, 0, 0, TILE*0.6);
+      grad.addColorStop(0, '#c08200');
+      grad.addColorStop(1, '#3d2200');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, TILE*0.55, TILE*0.42, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // Pattern on head
+      ctx.fillStyle = '#f5e6c888';
+      ctx.beginPath();
+      ctx.ellipse(TILE*0.1, 0, TILE*0.22, TILE*0.16, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // Eyes
+      const eyeRadius = 4;
+      [-1, 1].forEach(side => {
+        const ey = side * TILE * 0.22;
+        const ex = TILE * 0.18;
+        // eye white
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(ex, ey, eyeRadius, 0, Math.PI*2); ctx.fill();
+        // pupil (vertical slit like a ball python)
+        if (eyeOpen) {
+          ctx.fillStyle = '#000';
+          ctx.beginPath();
+          ctx.ellipse(ex, ey, 1.5, eyeRadius*0.8, 0, 0, Math.PI*2);
+          ctx.fill();
+        }
+        // eye shine
+        ctx.fillStyle = '#ffffffaa';
+        ctx.beginPath(); ctx.arc(ex+1, ey-1, 1.2, 0, Math.PI*2); ctx.fill();
+      });
+
+      // Tongue
+      if (tongueOut) {
+        ctx.strokeStyle = '#e03060';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(TILE*0.52, 0);
+        ctx.lineTo(TILE*0.78, 0);
+        // fork
+        ctx.moveTo(TILE*0.78, 0);
+        ctx.lineTo(TILE*0.92, -5);
+        ctx.moveTo(TILE*0.78, 0);
+        ctx.lineTo(TILE*0.92, 5);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    } else {
+      // BODY SEGMENT
+      const prev = snake[i-1];
+      const next = i < len-1 ? snake[i+1] : null;
+
+      // Draw as rounded rectangle segment
+      const segW = TILE * 0.88;
+      const segH = TILE * 0.78;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Angle toward previous segment
+      const dx = (prev.x - seg.x);
+      const dy = (prev.y - seg.y);
+      const ang = Math.atan2(dy, dx);
+      ctx.rotate(ang);
+
+      const grad = ctx.createLinearGradient(-segW/2, -segH/2, segW/2, segH/2);
+      grad.addColorStop(0, c1);
+      grad.addColorStop(1, c2);
+      ctx.fillStyle = grad;
+      roundRect(ctx, -segW/2, -segH/2, segW, segH, 5);
+      ctx.fill();
+
+      // Pied patch highlight on white segments
+      if (i % 4 === 0) {
+        ctx.fillStyle = '#ffffff30';
+        ctx.beginPath();
+        ctx.ellipse(0, -segH*0.15, segW*0.35, segH*0.28, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // Tail (last segment tapers)
+      if (i === len-1) {
+        ctx.fillStyle = c2;
+        ctx.beginPath();
+        ctx.ellipse(segW*0.4, 0, segW*0.25, segH*0.32, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// ─────────────────────────────────────────────
+//  HOUSE DRAW
+// ─────────────────────────────────────────────
+function drawHouse() {
+  // Floor tiles - different rooms get different colors
+  const midX = Math.floor(COLS/2);
+  const midY = Math.floor(ROWS/2);
+  for (let x = 0; x < COLS; x++) {
+    for (let y = 0; y < ROWS; y++) {
+      const k = `${x},${y}`;
+      if (walls.has(k)) {
+        // Wall
+        ctx.fillStyle = '#555';
+        ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+        ctx.fillStyle = '#666';
+        ctx.fillRect(x*TILE+1, y*TILE+1, TILE-2, TILE-2);
+        // Brick pattern
+        ctx.fillStyle = '#44444488';
+        ctx.fillRect(x*TILE+2, y*TILE+2, TILE-4, 1);
+      } else if (furniture.has(k)) {
+        // Furniture - wood color
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+        ctx.fillStyle = '#a0522d';
+        ctx.fillRect(x*TILE+2, y*TILE+2, TILE-4, TILE-4);
+      } else {
+        // Floor - quadrant colors
+        const inLeft  = x < midX;
+        const inTop   = y < midY;
+        if      (inLeft  && inTop)   ctx.fillStyle = '#c8b887'; // living room
+        else if (!inLeft && inTop)   ctx.fillStyle = '#b8c8a0'; // kitchen
+        else if (inLeft  && !inTop)  ctx.fillStyle = '#a0b8c8'; // bedroom
+        else                          ctx.fillStyle = '#c8a8b8'; // game room
+        ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+
+        // subtle grid lines
+        ctx.strokeStyle = '#00000015';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x*TILE, y*TILE, TILE, TILE);
+      }
+    }
+  }
+
+  // Room labels (small, atmospheric)
+  const labels = [
+    { text:'🛋️ Living Room', x: 2*TILE, y: 1.5*TILE },
+    { text:'🍳 Kitchen',     x: (midX+1)*TILE, y: 1.5*TILE },
+    { text:'🛏️ Bedroom',    x: 2*TILE, y: (midY+1)*TILE },
+    { text:'🎮 Game Room',   x: (midX+1)*TILE, y: (midY+1)*TILE },
+  ];
+  ctx.font = '11px Segoe UI';
+  ctx.fillStyle = '#00000044';
+  labels.forEach(l => ctx.fillText(l.text, l.x+2, l.y+16));
+
+  // Draw furniture labels
+  drawFurnitureArt();
+}
+
+function drawFurnitureArt() {
+  const midX = Math.floor(COLS/2);
+  const midY = Math.floor(ROWS/2);
+  ctx.font = '20px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // Couch
+  ctx.fillText('🛋️', 5*TILE, 4*TILE);
+  // Table
+  ctx.fillText('🪑', (midX+4)*TILE, 4*TILE);
+  // Bed
+  ctx.fillText('🛏️', 4*TILE, (midY+4)*TILE);
+  // TV
+  ctx.fillText('📺', (midX+4)*TILE, (midY+2.5)*TILE);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─────────────────────────────────────────────
+//  RATS
+// ─────────────────────────────────────────────
+function spawnRat(extra) {
+  const count = extra ? 3 : 1;
+  for (let i = 0; i < count; i++) {
+    let x, y, tries = 0;
+    do {
+      x = Math.floor(Math.random() * (COLS-2)) + 1;
+      y = Math.floor(Math.random() * (ROWS-2)) + 1;
+      tries++;
+    } while ((walls.has(`${x},${y}`) || furniture.has(`${x},${y}`) ||
+              snake.some(s=>s.x===x&&s.y===y) ||
+              rats.some(r=>r.x===x&&r.y===y)) && tries < 200);
+    if (tries < 200) rats.push({ x, y, wobble: Math.random()*Math.PI*2, frost: 1 });
+  }
+}
+
+function drawRats() {
+  const now = performance.now();
+  rats.forEach(rat => {
+    rat.wobble += 0.04;
+    const px = rat.x * TILE + TILE/2;
+    const py = rat.y * TILE + TILE/2 + Math.sin(rat.wobble)*1.5;
+
+    ctx.save();
+    ctx.translate(px, py);
+
+    // Frost glow
+    const glow = ctx.createRadialGradient(0,0,2,0,0,TILE*0.7);
+    glow.addColorStop(0, '#aadeff88');
+    glow.addColorStop(1, '#aadeff00');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(0,0,TILE*0.7,0,Math.PI*2); ctx.fill();
+
+    // Rat body
+    ctx.fillStyle = '#c8ddf0';
+    ctx.beginPath(); ctx.ellipse(0, 2, 8, 5, 0, 0, Math.PI*2); ctx.fill();
+    // Rat head
+    ctx.fillStyle = '#d8eeff';
+    ctx.beginPath(); ctx.ellipse(8, 0, 6, 4, -0.2, 0, Math.PI*2); ctx.fill();
+    // Ears
+    ctx.fillStyle = '#ffcccc';
+    ctx.beginPath(); ctx.arc(7, -5, 3, 0, Math.PI*2); ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#ff3366';
+    ctx.beginPath(); ctx.arc(11, -1, 1.5, 0, Math.PI*2); ctx.fill();
+    // Tail
+    ctx.strokeStyle = '#a0c0d8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-7, 2);
+    ctx.bezierCurveTo(-13, -2, -12, 6, -18, 4);
+    ctx.stroke();
+    // Ice crystals
+    ctx.fillStyle = '#ddf4ffcc';
+    ctx.font = '14px serif';
+    ctx.fillText('❄️', -5, -8);
+
+    ctx.restore();
+  });
+}
+
+// ─────────────────────────────────────────────
+//  PARTICLES & FLOAT TEXT
+// ─────────────────────────────────────────────
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push({
+      x: x*TILE+TILE/2, y: y*TILE+TILE/2,
+      vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+      life: 1, color
+    });
+  }
+}
+
+function spawnFloatText(x, y, text, color) {
+  floatTexts.push({ x: x*TILE+TILE/2, y: y*TILE, text, color, life: 1, vy: -1.5 });
+}
+
+function updateParticles(dt) {
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= 0.03;
+  });
+  floatTexts = floatTexts.filter(t => t.life > 0);
+  floatTexts.forEach(t => { t.y += t.vy; t.life -= 0.022; });
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4*p.life, 0, Math.PI*2); ctx.fill();
+  });
+  floatTexts.forEach(t => {
+    ctx.globalAlpha = t.life;
+    ctx.fillStyle = t.color;
+    ctx.font = 'bold 20px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(t.text, t.x, t.y);
+    ctx.textAlign = 'left';
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ─────────────────────────────────────────────
+//  UPGRADES
+// ─────────────────────────────────────────────
+function isActive(id) {
+  if (!activeEffects[id]) return false;
+  return activeEffects[id] > performance.now();
+}
+
+function activateUpgrade(up) {
+  if (up.duration > 0) {
+    activeEffects[up.id] = performance.now() + up.duration;
+  }
+  // Instant effects
+  if (up.id === 'speed')   speed = BASE_SPEED * 0.55;
+  if (up.id === 'shield')  shieldActive = true;
+  if (up.id === 'big')     { for(let i=0;i<5;i++) snake.push({...snake[snake.length-1]}); }
+  if (up.id === 'shrink')  { snake.splice(Math.max(1, snake.length-3)); }
+  if (up.id === 'freeze')  spawnRat(true);
+
+  updateUpgradeBadges();
+}
+
+function updateUpgradeBadges() {
+  const div = document.getElementById('active-upgrades');
+  div.innerHTML = '';
+  const now = performance.now();
+  Object.entries(activeEffects).forEach(([id, exp]) => {
+    if (exp < now) return;
+    const up = UPGRADES.find(u=>u.id===id);
+    const remaining = Math.ceil((exp-now)/1000);
+    const badge = document.createElement('div');
+    badge.className = 'upgrade-badge';
+    badge.textContent = `${up.icon} ${up.name} ${remaining}s`;
+    div.appendChild(badge);
+  });
+  if (shieldActive) {
+    const b = document.createElement('div');
+    b.className = 'upgrade-badge';
+    b.style.background = '#3b82f6cc';
+    b.textContent = '🛡️ Shield Active';
+    div.appendChild(b);
+  }
+}
+
+function expireEffects() {
+  const now = performance.now();
+  let changed = false;
+  Object.entries(activeEffects).forEach(([id, exp]) => {
+    if (exp < now) {
+      delete activeEffects[id];
+      if (id === 'speed') speed = BASE_SPEED;
+      changed = true;
+    }
+  });
+  if (changed) updateUpgradeBadges();
+}
+
+function showUpgradeScreen() {
+  upgradeReady = true;
+  gameRunning = false;
+
+  // Pick 3 random unique upgrades
+  const shuffled = [...UPGRADES].sort(()=>Math.random()-0.5).slice(0,3);
+  const grid = document.getElementById('upgrade-grid');
+  grid.innerHTML = '';
+  shuffled.forEach(up => {
+    const card = document.createElement('div');
+    card.className = 'upgrade-card';
+    card.innerHTML = `<div class="up-icon">${up.icon}</div><h3>${up.name}</h3><p>${up.desc}</p>`;
+    card.onclick = () => {
+      activateUpgrade(up);
+      document.getElementById('upgrade-screen').style.display = 'none';
+      upgradeReady = false;
+      gameRunning = true;
+    };
+    grid.appendChild(card);
+  });
+
+  document.getElementById('upgrade-screen').style.display = 'flex';
+}
+
+// ─────────────────────────────────────────────
+//  MAGNET EFFECT
+// ─────────────────────────────────────────────
+function applyMagnet() {
+  if (!isActive('magnet')) return;
+  const head = snake[0];
+  rats.forEach(rat => {
+    const dx = head.x - rat.x;
+    const dy = head.y - rat.y;
+    const dist = Math.abs(dx)+Math.abs(dy);
+    if (dist < 7 && dist > 0) {
+      rat.x += dx > 0 ? 0.015 : dx < 0 ? -0.015 : 0;
+      rat.y += dy > 0 ? 0.015 : dy < 0 ? -0.015 : 0;
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+//  GAME LOOP
+// ─────────────────────────────────────────────
+function gameLoop(timestamp) {
+  if (!gameRunning) return;
+  const dt = timestamp - lastTime;
+  lastTime = timestamp;
+
+  moveTimer += dt;
+  tongueTimer += dt;
+  eyeBlinkTimer += dt;
+
+  // Tongue flick
+  if (tongueTimer > 600) { tongueOut = !tongueOut; tongueTimer = 0; }
+  // Eye blink
+  if (eyeBlinkTimer > 3000) { eyeOpen = false; setTimeout(()=>{ eyeOpen=true; }, 120); eyeBlinkTimer = 0; }
+
+  expireEffects();
+  applyMagnet();
+  updateParticles(dt);
+
+  if (moveTimer >= speed) {
+    moveTimer = 0;
+    moveSnake();
+  }
+
+  // Draw everything
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawHouse();
+  drawRats();
+  drawSnake();
+  drawParticles();
+
+  // HUD update
+  document.getElementById('score-display').textContent  = score;
+  document.getElementById('rats-display').textContent   = ratsEaten;
+  document.getElementById('length-display').textContent = snake.length;
+  updateUpgradeBadges();
+
+  requestAnimationFrame(gameLoop);
+}
+
+function moveSnake() {
+  dir = { ...nextDir };
+  const head = snake[0];
+  const nx = head.x + dir.x;
+  const ny = head.y + dir.y;
+  const key = `${nx},${ny}`;
+
+  // Wall/self collision
+  const hitWall = walls.has(key);
+  const hitFurniture = furniture.has(key) && !isActive('ghost');
+  const hitSelf = snake.slice(1).some(s => s.x===nx && s.y===ny);
+
+  if (hitWall || hitFurniture || hitSelf) {
+    if (shieldActive && !hitSelf) {
+      shieldActive = false;
+      spawnParticles(nx, ny, '#3b82f6', 12);
+      spawnFloatText(head.x, head.y, '🛡️ Blocked!', '#3b82f6');
+      updateUpgradeBadges();
+      return;
+    }
+    endGame();
+    return;
+  }
+
+  // Move head
+  snake.unshift({ x: nx, y: ny });
+
+  // Check rat collision (rounded for magnet)
+  let ate = false;
+  rats = rats.filter(rat => {
+    const dist = Math.hypot(rat.x - nx, rat.y - ny);
+    if (dist < 1.1) {
+      ate = true;
+      const pts = isActive('double') ? 20 : 10;
+      score += pts;
+      ratsEaten++;
+      spawnParticles(nx, ny, '#aadeff', 16);
+      spawnFloatText(nx, ny, isActive('double') ? '+20 🔥' : '+10', '#f0c040');
+
+      // Upgrade every 3 rats
+      upgradesEarned++;
+      if (upgradesEarned % 3 === 0) setTimeout(showUpgradeScreen, 200);
+
+      return false;
+    }
+    return true;
+  });
+
+  if (!ate) {
+    snake.pop(); // remove tail if no rat eaten
+  } else if (isActive('big')) {
+    // Extra growth burst
+    snake.push({...snake[snake.length-1]});
+    snake.push({...snake[snake.length-1]});
+  }
+
+  // Ensure at least 1 rat on screen
+  if (rats.length === 0) spawnRat(false);
+}
+
+// ─────────────────────────────────────────────
+//  GAME START / END
+// ─────────────────────────────────────────────
+function startGame() {
+  resizeCanvas();
+  buildHouse();
+
+  snake = [{ x: Math.floor(COLS/4), y: Math.floor(ROWS/2) }];
+  dir   = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  rats  = [];
+  score = 0; ratsEaten = 0;
+  particles = []; floatTexts = [];
+  shieldActive = false;
+  activeEffects = {};
+  upgradesEarned = 0;
+  speed = BASE_SPEED;
+  moveTimer = 0;
+  tongueTimer = 0; tongueOut = false;
+  eyeBlinkTimer = 0; eyeOpen = true;
+
+  spawnRat(false);
+  spawnRat(false); // start with 2 rats
+
+  document.getElementById('name-display').textContent = snakeName;
+  document.getElementById('active-upgrades').innerHTML = '';
+  document.getElementById('gameover-screen').style.display = 'none';
+  document.getElementById('upgrade-screen').style.display = 'none';
+
+  gameRunning = true;
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  gameRunning = false;
+  document.getElementById('gameover-name').textContent    = `${snakeName} had a rough day... 😢`;
+  document.getElementById('gameover-score').textContent   = `Score: ${score}`;
+  document.getElementById('gameover-rats').textContent    = `Frozen Rats Eaten: ${ratsEaten} 🐀`;
+  document.getElementById('gameover-length').textContent  = `Max Length: ${snake.length} segments 🐍`;
+  document.getElementById('gameover-screen').style.display = 'flex';
+}
+
+// ─────────────────────────────────────────────
+//  CONTROLS — KEYBOARD
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (!gameRunning && !upgradeReady) return;
+  const d = {
+    ArrowUp:    { x: 0, y:-1 },
+    ArrowDown:  { x: 0, y: 1 },
+    ArrowLeft:  { x:-1, y: 0 },
+    ArrowRight: { x: 1, y: 0 },
+    w: { x: 0, y:-1 }, s: { x: 0, y: 1 },
+    a: { x:-1, y: 0 }, d: { x: 1, y: 0 },
+  }[e.key];
+  if (d) {
+    // Prevent reversing
+    if (d.x !== -dir.x || d.y !== -dir.y) nextDir = d;
+    e.preventDefault();
+  }
+});
+
+// ─────────────────────────────────────────────
+//  CONTROLS — JOYSTICK
+// ─────────────────────────────────────────────
+const joyBase  = document.getElementById('joystick-base');
+const joyKnob  = document.getElementById('joystick-knob');
+let joyActive  = false;
+let joyOrigin  = { x: 0, y: 0 };
+const JOY_MAX  = 40;
+
+function getJoyPos(e) {
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX, y: touch.clientY };
+}
+
+joyBase.addEventListener('touchstart', e => {
+  e.preventDefault();
+  joyActive = true;
+  const r = joyBase.getBoundingClientRect();
+  joyOrigin = { x: r.left + r.width/2, y: r.top + r.height/2 };
+}, { passive: false });
+
+joyBase.addEventListener('mousedown', e => {
+  joyActive = true;
+  const r = joyBase.getBoundingClientRect();
+  joyOrigin = { x: r.left + r.width/2, y: r.top + r.height/2 };
+});
+
+document.addEventListener('touchmove', e => {
+  if (!joyActive) return;
+  e.preventDefault();
+  const pos = getJoyPos(e);
+  handleJoyMove(pos.x - joyOrigin.x, pos.y - joyOrigin.y);
+}, { passive: false });
+
+document.addEventListener('mousemove', e => {
+  if (!joyActive) return;
+  handleJoyMove(e.clientX - joyOrigin.x, e.clientY - joyOrigin.y);
+});
+
+document.addEventListener('touchend',  () => resetJoy());
+document.addEventListener('mouseup',   () => resetJoy());
+
+function handleJoyMove(dx, dy) {
+  const dist = Math.min(Math.hypot(dx, dy), JOY_MAX);
+  const angle = Math.atan2(dy, dx);
+  joyKnob.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+
+  const threshold = 12;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > threshold && dir.x !== -1)  nextDir = { x:1, y:0 };
+    if (dx < -threshold && dir.x !== 1)  nextDir = { x:-1,y:0 };
+  } else {
+    if (dy > threshold && dir.y !== -1)  nextDir = { x:0, y:1 };
+    if (dy < -threshold && dir.y !== 1)  nextDir = { x:0, y:-1 };
+  }
+}
+
+function resetJoy() {
+  joyActive = false;
+  joyKnob.style.transform = 'translate(0,0)';
+}
+
+// ─────────────────────────────────────────────
+//  UI EVENTS
+// ─────────────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', () => {
+  const input = document.getElementById('snake-name-input').value.trim();
+  snakeName = input || 'Noodles';
+  document.getElementById('menu-screen').style.display = 'none';
+  startGame();
+});
+
+document.getElementById('snake-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('start-btn').click();
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.getElementById('gameover-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+});
+
+window.addEventListener('resize', () => {
+  if (gameRunning) {
+    resizeCanvas();
+    buildHouse();
+  }
+});
+</script>
+</body>
+</html>
