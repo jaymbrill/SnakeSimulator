@@ -37,10 +37,10 @@
     bottom: 0;
     width: 100%;
     text-align: center;
-    font-size: 13px;
-    color: #aaa;
+    font-size: 17px;
+    color: #ccc;
     background: #0d0d1a;
-    padding: 5px;
+    padding: 6px;
     letter-spacing: 1px;
     border-top: 1px solid #333;
     z-index: 100;
@@ -75,15 +75,20 @@
     z-index: 200;
   }
   .overlay h1 {
-    font-size: 48px;
+    font-size: 64px;
     color: #f0c040;
     text-shadow: 0 0 20px #f0c04088;
     margin-bottom: 10px;
   }
   .overlay h2 {
-    font-size: 28px;
+    font-size: 32px;
     color: #4a9eff;
     margin-bottom: 24px;
+  }
+  /* Larger title only on the menu screen, not game-over/upgrade */
+  #menu-screen h1 {
+    font-size: 80px;
+    letter-spacing: 2px;
   }
   .overlay p { color: #ccc; margin: 6px 0; font-size: 15px; }
   .overlay input[type="text"] {
@@ -226,7 +231,7 @@
     <h1>Snake Simulator</h1>
     <p class="tagline">Pied Ball Python Edition</p>
     <h2>Name your python!</h2>
-    <input type="text" id="snake-name-input" placeholder="e.g. Noodles" maxlength="20" />
+    <input type="text" id="snake-name-input" placeholder="e.g. Ripple" maxlength="20" />
     <button class="btn btn-primary" id="start-btn">LET'S GOOO! 🐍</button>
     <p style="margin-top:16px;font-size:13px;color:#888;">Use arrow keys or the joystick to move</p>
     <p style="font-size:13px;color:#888;">Eat frozen rats 🐀 to grow &amp; unlock upgrades!</p>
@@ -356,7 +361,7 @@ function buildHouse() {
 // ─────────────────────────────────────────────
 //  GAME STATE
 // ─────────────────────────────────────────────
-let snakeName    = 'Noodles';
+let snakeName    = 'Ripple';
 let snake        = [];
 let dir          = { x: 1, y: 0 };
 let nextDir      = { x: 1, y: 0 };
@@ -778,6 +783,11 @@ function expireEffects() {
 }
 
 function showUpgradeScreen() {
+  // Race-condition guards:
+  //  - gameRunning can be false if endGame() fired in the 200ms setTimeout window
+  //  - upgradeScreenOpen means a previous upgrade screen is already showing
+  if (!gameRunning || upgradeScreenOpen) return;
+
   upgradeReady = true;
   upgradeScreenOpen = true;  // pause game logic; loop keeps running
 
@@ -1068,7 +1078,7 @@ function resetJoy() {
 // ─────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', () => {
   const input = document.getElementById('snake-name-input').value.trim();
-  snakeName = input || 'Noodles';
+  snakeName = input || 'Ripple';
   document.getElementById('menu-screen').style.display = 'none';
   startGame();
 });
