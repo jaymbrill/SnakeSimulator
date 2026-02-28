@@ -135,48 +135,6 @@
   #upgrade-screen .upgrade-card .up-icon { font-size: 36px; margin-bottom: 8px; }
   #upgrade-screen .upgrade-card h3 { font-size: 15px; color: #f0c040; margin-bottom: 6px; }
   #upgrade-screen .upgrade-card p { font-size: 12px; color: #aaa; }
-  /* Joystick */
-  #joystick-zone {
-    position: fixed;
-    bottom: 42px;
-    left: 20px;
-    width: 140px;
-    height: 140px;
-    z-index: 150;
-  }
-  #joystick-base {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    background: #ffffff18;
-    border: 3px solid #ffffff33;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #joystick-knob {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #6af, #24a);
-    box-shadow: 0 4px 14px #0008;
-    position: absolute;
-    pointer-events: none;
-    transition: transform 0.05s;
-  }
-  /* D-pad arrows inside joystick */
-  .dpad-arrow {
-    position: absolute;
-    font-size: 22px;
-    color: #ffffff55;
-    user-select: none;
-  }
-  .dpad-arrow.up    { top: 6px;    left: 50%; transform: translateX(-50%); }
-  .dpad-arrow.down  { bottom: 6px; left: 50%; transform: translateX(-50%); }
-  .dpad-arrow.left  { left: 6px;   top: 50%;  transform: translateY(-50%); }
-  .dpad-arrow.right { right: 6px;  top: 50%;  transform: translateY(-50%); }
-
   /* Active upgrade badges */
   #active-upgrades {
     position: fixed;
@@ -214,26 +172,67 @@
 
   <div id="active-upgrades"></div>
 
-  <!-- Joystick -->
-  <div id="joystick-zone">
-    <div id="joystick-base">
-      <span class="dpad-arrow up">▲</span>
-      <span class="dpad-arrow down">▼</span>
-      <span class="dpad-arrow left">◀</span>
-      <span class="dpad-arrow right">▶</span>
-      <div id="joystick-knob"></div>
-    </div>
-  </div>
-
   <!-- Menu Screen -->
   <div class="overlay" id="menu-screen">
-    <div class="logo-snake">🐍</div>
     <h1>Snake Simulator</h1>
     <p class="tagline">Pied Ball Python Edition</p>
+    <!-- Realistic pied ball python illustration -->
+    <svg viewBox="0 0 320 160" width="320" height="160" style="margin:10px 0 4px" xmlns="http://www.w3.org/2000/svg">
+      <!-- Coiled body — white/cream base with dark brown pied patches -->
+      <!-- Outer coil -->
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#f0e8d0" stroke-width="26" stroke-linecap="round"/>
+      <!-- Outer coil dark patches -->
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#2a1400" stroke-width="26" stroke-linecap="round"
+               stroke-dasharray="55 320" stroke-dashoffset="-10"/>
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#2a1400" stroke-width="26" stroke-linecap="round"
+               stroke-dasharray="38 320" stroke-dashoffset="-210"/>
+      <!-- Gold/brown saddle markings on outer coil -->
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#8b5e00" stroke-width="10" stroke-linecap="round"
+               stroke-dasharray="18 320" stroke-dashoffset="-8"/>
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#8b5e00" stroke-width="10" stroke-linecap="round"
+               stroke-dasharray="12 320" stroke-dashoffset="-208"/>
+      <!-- Inner coil -->
+      <ellipse cx="162" cy="98" rx="85" ry="33" fill="none" stroke="#f0e8d0" stroke-width="24" stroke-linecap="round"/>
+      <ellipse cx="162" cy="98" rx="85" ry="33" fill="none" stroke="#2a1400" stroke-width="24" stroke-linecap="round"
+               stroke-dasharray="40 240" stroke-dashoffset="20"/>
+      <ellipse cx="162" cy="98" rx="85" ry="33" fill="none" stroke="#2a1400" stroke-width="24" stroke-linecap="round"
+               stroke-dasharray="28 240" stroke-dashoffset="-140"/>
+      <ellipse cx="162" cy="98" rx="85" ry="33" fill="none" stroke="#8b5e00" stroke-width="9" stroke-linecap="round"
+               stroke-dasharray="14 240" stroke-dashoffset="20"/>
+      <!-- Belly highlight on coils -->
+      <ellipse cx="160" cy="95" rx="130" ry="52" fill="none" stroke="#fff8ee" stroke-width="6" stroke-linecap="round"
+               stroke-dasharray="80 320" stroke-dashoffset="100"/>
+      <!-- HEAD -->
+      <g transform="translate(50,48) rotate(-20)">
+        <!-- Head shape -->
+        <ellipse cx="0" cy="0" rx="22" ry="14" fill="#c08000"/>
+        <!-- Crown pattern (dark saddle) -->
+        <ellipse cx="4" cy="-3" rx="14" ry="8" fill="#2a1400"/>
+        <!-- Snout lighter area -->
+        <ellipse cx="-14" cy="0" rx="9" ry="7" fill="#e0a040"/>
+        <!-- Eye -->
+        <circle cx="-2" cy="-6" r="5" fill="#1a0a00"/>
+        <circle cx="-2" cy="-6" r="3.5" fill="#4a2800"/>
+        <!-- Pupil slit -->
+        <ellipse cx="-2" cy="-6" rx="1" ry="3" fill="#0a0000"/>
+        <!-- Eye shine -->
+        <circle cx="-3.5" cy="-7.2" r="1.2" fill="#ffffffaa"/>
+        <!-- Labial scales outline -->
+        <path d="-18,4 -14,6 -8,6 -2,5 4,4" fill="none" stroke="#8b5e0066" stroke-width="0.8"/>
+        <!-- Tongue -->
+        <line x1="-22" y1="3" x2="-30" y2="3" stroke="#cc2255" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="-30" y1="3" x2="-36" y2="-1" stroke="#cc2255" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="-30" y1="3" x2="-36" y2="7"  stroke="#cc2255" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- Scale texture dots -->
+        <circle cx="6"  cy="-2" r="1" fill="#1a0a0044"/>
+        <circle cx="2"  cy="3"  r="1" fill="#1a0a0033"/>
+        <circle cx="-6" cy="-1" r="1" fill="#1a0a0044"/>
+      </g>
+    </svg>
     <h2>Name your python!</h2>
     <input type="text" id="snake-name-input" placeholder="e.g. Ripple" maxlength="20" />
     <button class="btn btn-primary" id="start-btn">LET'S GOOO! 🐍</button>
-    <p style="margin-top:16px;font-size:13px;color:#888;">Use arrow keys or the joystick to move</p>
+    <p style="margin-top:12px;font-size:13px;color:#888;">Use arrow keys to move</p>
     <p style="font-size:13px;color:#888;">Eat frozen rats 🐀 to grow &amp; unlock upgrades!</p>
   </div>
 
@@ -379,6 +378,7 @@ let activeEffects= {};   // { effectId: expiresAt }
 let upgradeReady = false;
 let upgradesEarned = 0;
 let upgradeScreenOpen = false;
+let pendingUpgrade = false;
 let rafId = null;
 let tongueOut    = false;
 let tongueTimer  = 0;
@@ -783,11 +783,6 @@ function expireEffects() {
 }
 
 function showUpgradeScreen() {
-  // Race-condition guards:
-  //  - gameRunning can be false if endGame() fired in the 200ms setTimeout window
-  //  - upgradeScreenOpen means a previous upgrade screen is already showing
-  if (!gameRunning || upgradeScreenOpen) return;
-
   upgradeReady = true;
   upgradeScreenOpen = true;  // pause game logic; loop keeps running
 
@@ -839,46 +834,56 @@ function startLoop() {
 }
 
 function gameLoop(timestamp) {
-  rafId = null;
-  if (!gameRunning) return;
-  const dt = timestamp - lastTime;
-  lastTime = timestamp;
-
-  // While upgrade screen is open: keep the loop alive but freeze game state
-  if (!upgradeScreenOpen) {
-    moveTimer += dt;
-    tongueTimer += dt;
-    eyeBlinkTimer += dt;
-
-    // Tongue flick
-    if (tongueTimer > 600) { tongueOut = !tongueOut; tongueTimer = 0; }
-    // Eye blink
-    if (eyeBlinkTimer > 3000) { eyeOpen = false; setTimeout(()=>{ eyeOpen=true; }, 120); eyeBlinkTimer = 0; }
-
-    expireEffects();
-    applyMagnet();
-    updateParticles(dt);
-
-    if (moveTimer >= speed) {
-      moveTimer = 0;
-      moveSnake();
-    }
-  }
-
-  // Draw everything
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawHouse();
-  drawRats();
-  drawSnake();
-  drawParticles();
-
-  // HUD update
-  document.getElementById('score-display').textContent  = score;
-  document.getElementById('rats-display').textContent   = ratsEaten;
-  document.getElementById('length-display').textContent = snake.length;
-  updateUpgradeBadges();
-
+  // Queue next frame FIRST so no exception can kill the loop
   rafId = requestAnimationFrame(gameLoop);
+
+  if (!gameRunning) { cancelAnimationFrame(rafId); rafId = null; return; }
+
+  try {
+    const dt = timestamp - lastTime;
+    lastTime = timestamp;
+
+    // While upgrade screen is open: freeze game state but keep drawing
+    if (!upgradeScreenOpen) {
+      moveTimer += dt;
+      tongueTimer += dt;
+      eyeBlinkTimer += dt;
+
+      if (tongueTimer > 600) { tongueOut = !tongueOut; tongueTimer = 0; }
+      if (eyeBlinkTimer > 3000) { eyeOpen = false; setTimeout(()=>{ eyeOpen=true; }, 120); eyeBlinkTimer = 0; }
+
+      expireEffects();
+      applyMagnet();
+      updateParticles(dt);
+
+      if (moveTimer >= speed) {
+        moveTimer = 0;
+        moveSnake();
+      }
+
+      // Show upgrade screen from INSIDE the loop — no setTimeout, no race conditions
+      if (pendingUpgrade && gameRunning) {
+        pendingUpgrade = false;
+        showUpgradeScreen();
+      }
+    }
+
+    // Draw everything
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawHouse();
+    drawRats();
+    drawSnake();
+    drawParticles();
+
+    // HUD update
+    document.getElementById('score-display').textContent  = score;
+    document.getElementById('rats-display').textContent   = ratsEaten;
+    document.getElementById('length-display').textContent = snake.length;
+    updateUpgradeBadges();
+
+  } catch(err) {
+    console.error('Game loop error:', err);
+  }
 }
 
 function moveSnake() {
@@ -922,7 +927,7 @@ function moveSnake() {
 
       // Upgrade every 3 rats
       upgradesEarned++;
-      if (upgradesEarned % 3 === 0) setTimeout(showUpgradeScreen, 200);
+      if (upgradesEarned % 3 === 0) pendingUpgrade = true;
 
       return false;
     }
@@ -965,6 +970,7 @@ function startGame() {
   activeEffects = {};
   upgradesEarned = 0;
   upgradeScreenOpen = false;
+  pendingUpgrade = false;
   speed = BASE_SPEED;
   moveTimer = 0;
   tongueTimer = 0; tongueOut = false;
@@ -1010,68 +1016,6 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
   }
 });
-
-// ─────────────────────────────────────────────
-//  CONTROLS — JOYSTICK
-// ─────────────────────────────────────────────
-const joyBase  = document.getElementById('joystick-base');
-const joyKnob  = document.getElementById('joystick-knob');
-let joyActive  = false;
-let joyOrigin  = { x: 0, y: 0 };
-const JOY_MAX  = 40;
-
-function getJoyPos(e) {
-  const touch = e.touches ? e.touches[0] : e;
-  return { x: touch.clientX, y: touch.clientY };
-}
-
-joyBase.addEventListener('touchstart', e => {
-  e.preventDefault();
-  joyActive = true;
-  const r = joyBase.getBoundingClientRect();
-  joyOrigin = { x: r.left + r.width/2, y: r.top + r.height/2 };
-}, { passive: false });
-
-joyBase.addEventListener('mousedown', e => {
-  joyActive = true;
-  const r = joyBase.getBoundingClientRect();
-  joyOrigin = { x: r.left + r.width/2, y: r.top + r.height/2 };
-});
-
-document.addEventListener('touchmove', e => {
-  if (!joyActive) return;
-  e.preventDefault();
-  const pos = getJoyPos(e);
-  handleJoyMove(pos.x - joyOrigin.x, pos.y - joyOrigin.y);
-}, { passive: false });
-
-document.addEventListener('mousemove', e => {
-  if (!joyActive) return;
-  handleJoyMove(e.clientX - joyOrigin.x, e.clientY - joyOrigin.y);
-});
-
-document.addEventListener('touchend',  () => resetJoy());
-document.addEventListener('mouseup',   () => resetJoy());
-
-function handleJoyMove(dx, dy) {
-  const dist = Math.min(Math.hypot(dx, dy), JOY_MAX);
-  const angle = Math.atan2(dy, dx);
-  joyKnob.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-
-  const threshold = 12;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > threshold && dir.x !== -1)  nextDir = { x:1, y:0 };
-    if (dx < -threshold && dir.x !== 1)  nextDir = { x:-1,y:0 };
-  } else {
-    if (dy > threshold && dir.y !== -1)  nextDir = { x:0, y:1 };
-    if (dy < -threshold && dir.y !== 1)  nextDir = { x:0, y:-1 };
-  }
-}
-
-function resetJoy() {
-  joyActive = false;
-  joyKnob.style.transform = 'translate(0,0)';
-}
 
 // ─────────────────────────────────────────────
 //  UI EVENTS
