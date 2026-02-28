@@ -788,6 +788,8 @@ function showUpgradeScreen() {
       document.getElementById('upgrade-screen').style.display = 'none';
       upgradeReady = false;
       gameRunning = true;
+      lastTime = performance.now(); // prevent huge dt spike after pause
+      requestAnimationFrame(gameLoop); // restart the loop (it stopped when upgrade screen opened)
     };
     grid.appendChild(card);
   });
