@@ -319,15 +319,17 @@ function buildHouse() {
   const midX = Math.floor(W / 2);
   const midY = Math.floor(H / 2);
 
-  // Horizontal wall with a door gap
+  // Horizontal wall: door offset to the left (1/3 from left), 5 tiles wide
+  const hDoorX = Math.floor(W / 3);
   for (let x = 1; x < W-1; x++) {
-    if (x !== midX-1 && x !== midX && x !== midX+1) {
+    if (x < hDoorX - 2 || x > hDoorX + 2) {
       walls.add(`${x},${midY}`);
     }
   }
-  // Vertical wall with a door gap
+  // Vertical wall: door offset toward bottom (2/3 down), 5 tiles wide
+  const vDoorY = Math.floor(H * 2 / 3);
   for (let y = 1; y < H-1; y++) {
-    if (y !== midY-1 && y !== midY && y !== midY+1) {
+    if (y < vDoorY - 2 || y > vDoorY + 2) {
       walls.add(`${midX},${y}`);
     }
   }
@@ -369,6 +371,7 @@ let shieldActive = false;
 let activeEffects= {};   // { effectId: expiresAt }
 let upgradeReady = false;
 let upgradesEarned = 0;
+let rafId = null;
 let tongueOut    = false;
 let tongueTimer  = 0;
 let eyeBlinkTimer= 0;
@@ -788,8 +791,7 @@ function showUpgradeScreen() {
       document.getElementById('upgrade-screen').style.display = 'none';
       upgradeReady = false;
       gameRunning = true;
-      lastTime = performance.now(); // prevent huge dt spike after pause
-      requestAnimationFrame(gameLoop); // restart the loop (it stopped when upgrade screen opened)
+      startLoop();
     };
     grid.appendChild(card);
   });
@@ -817,7 +819,14 @@ function applyMagnet() {
 // ─────────────────────────────────────────────
 //  GAME LOOP
 // ─────────────────────────────────────────────
+function startLoop() {
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  lastTime = performance.now();
+  rafId = requestAnimationFrame(gameLoop);
+}
+
 function gameLoop(timestamp) {
+  rafId = null;
   if (!gameRunning) return;
   const dt = timestamp - lastTime;
   lastTime = timestamp;
@@ -853,7 +862,7 @@ function gameLoop(timestamp) {
   document.getElementById('length-display').textContent = snake.length;
   updateUpgradeBadges();
 
-  requestAnimationFrame(gameLoop);
+  rafId = requestAnimationFrame(gameLoop);
 }
 
 function moveSnake() {
@@ -953,8 +962,7 @@ function startGame() {
   document.getElementById('upgrade-screen').style.display = 'none';
 
   gameRunning = true;
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  startLoop();
 }
 
 function endGame() {
