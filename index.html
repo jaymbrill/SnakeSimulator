@@ -257,7 +257,7 @@
 //  GAME CONFIGURATION
 // ─────────────────────────────────────────────
 const TILE = 24;          // grid tile size in px
-const BASE_SPEED = 140;   // ms per move tick
+const BASE_SPEED = 180;   // ms per move tick
 
 const UPGRADES = [
   { id:'speed',   icon:'⚡', name:'Turbo Slither',  desc:'Move faster for a while!',         duration: 8000 },
@@ -921,7 +921,14 @@ function startGame() {
   resizeCanvas();
   buildHouse();
 
-  snake = [{ x: Math.floor(COLS/4), y: Math.floor(ROWS/2) }];
+  // Start in the upper-left room, well clear of the mid-row wall (which sits at ROWS/2)
+  const startX = Math.max(5, Math.floor(COLS / 4));
+  const startY = Math.max(3, Math.floor(ROWS / 4));
+  snake = [
+    { x: startX,     y: startY },
+    { x: startX - 1, y: startY },
+    { x: startX - 2, y: startY },
+  ];
   dir   = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
   rats  = [];
