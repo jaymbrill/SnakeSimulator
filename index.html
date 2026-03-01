@@ -272,6 +272,7 @@ const UPGRADES = [
   { id:'freeze',  icon:'❄️', name:'Freeze Rats',   desc:'Extra frozen rats appear!',         duration: 5000 },
   { id:'big',     icon:'💪', name:'Big Eater',      desc:'Grow SUPER fast!',                  duration: 0    },
   { id:'shrink',  icon:'✂️', name:'Quick Shrink',  desc:'Shrink 3 segments — easier to steer!', duration: 0 },
+  { id:'flute',   icon:'🪈', name:'Flute Charm',   desc:'Hypnotize rival snakes & summon extra rats!', duration: 8000 },
 ];
 
 // ─────────────────────────────────────────────
@@ -404,11 +405,16 @@ function spawnAiSnake(morphIdx) {
 
 function getAiDir(ai) {
   const head = ai.body[0];
-  // Find nearest rat
+  // When hypnotized by flute, snakes follow the player's head
   let target = null, best = Infinity;
-  for (const r of rats) {
-    const d = Math.abs(r.x - head.x) + Math.abs(r.y - head.y);
-    if (d < best) { best = d; target = r; }
+  if (isActive('flute')) {
+    target = snake[0];  // chase the player
+  } else {
+    // Find nearest rat
+    for (const r of rats) {
+      const d = Math.abs(r.x - head.x) + Math.abs(r.y - head.y);
+      if (d < best) { best = d; target = r; }
+    }
   }
   // Build ordered preference list
   let prefs;
@@ -500,6 +506,12 @@ function drawAiSnakes() {
       const sx = seg.x * TILE + TILE/2, sy = seg.y * TILE + TILE/2;
       ctx.save();
       ctx.translate(sx, sy);
+      // Hypnosis glow
+      if (isActive('flute')) {
+        const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 200 + i * 0.4);
+        ctx.shadowColor = '#cc00ff';
+        ctx.shadowBlur = 8 + pulse * 6;
+      }
       if (i === 0) {
         // Head — rotated toward travel direction
         ctx.rotate(Math.atan2(ai.dir.y, ai.dir.x));
@@ -510,13 +522,43 @@ function drawAiSnakes() {
         ctx.ellipse(0, 0, TILE * 0.52, TILE * 0.40, 0, 0, Math.PI*2);
         ctx.fill();
         // Eyes
+        const hypnotized = isActive('flute');
         [-TILE*0.18, TILE*0.18].forEach(ey => {
           ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(TILE*0.12, ey, 3, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(TILE*0.12+0.5, ey, 1.6, 0, Math.PI*2); ctx.fill();
+          if (hypnotized) {
+            // Swirly spiral eye
+            const t = performance.now() / 300;
+            ctx.strokeStyle = '#cc00ff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let a = 0; a < Math.PI * 4; a += 0.2) {
+              const r = (a / (Math.PI * 4)) * 2.5;
+              const ex = TILE*0.12 + Math.cos(a + t) * r;
+              const ey2 = ey + Math.sin(a + t) * r;
+              a === 0 ? ctx.moveTo(ex, ey2) : ctx.lineTo(ex, ey2);
+            }
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(TILE*0.12+0.5, ey, 1.6, 0, Math.PI*2); ctx.fill();
+          }
         });
         // Snout
         ctx.fillStyle = belly;
         ctx.beginPath(); ctx.ellipse(TILE*0.36, 0, TILE*0.13, TILE*0.16, 0, 0, Math.PI*2); ctx.fill();
+        // Floating music note when hypnotized
+        if (isActive('flute')) {
+          ctx.save();
+          ctx.rotate(-Math.atan2(ai.dir.y, ai.dir.x)); // un-rotate for text
+          const notePhase = (performance.now() / 500 + ai.morphIdx) % (Math.PI * 2);
+          ctx.globalAlpha = 0.85;
+          ctx.font = '11px serif';
+          ctx.fillStyle = '#cc00ff';
+          const noteX = Math.cos(notePhase) * 8;
+          const noteY = -TILE * 0.8 + Math.sin(notePhase * 2) * 3;
+          ctx.fillText('♪', noteX - 3, noteY);
+          ctx.globalAlpha = 1;
+          ctx.restore();
+        }
       } else {
         // Body — alternating pattern, tapering toward tail
         const t = i / Math.max(len - 1, 1);
@@ -895,6 +937,7 @@ function activateUpgrade(up) {
   if (up.id === 'big')     { for(let i=0;i<5;i++) snake.push({...snake[snake.length-1]}); }
   if (up.id === 'shrink')  { snake.splice(Math.max(1, snake.length-3)); }
   if (up.id === 'freeze')  spawnRat(true);
+  if (up.id === 'flute')   { spawnRat(true); spawnRat(true); spawnFloatText(snake[0].x, snake[0].y, '🪈 Charmed!', '#cc00ff'); }  // spawn 6 extra rats
 
   updateUpgradeBadges();
 }
